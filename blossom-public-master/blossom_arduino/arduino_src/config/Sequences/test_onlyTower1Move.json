@@ -1,0 +1,50 @@
+{
+  "animation": "OnlyTower1Move", 
+  "frame_list": [
+    {
+      "positions": [
+        {
+          "dof": "tower_1", 
+          "pos": 10.00
+        }
+      ], 
+      "millis": 0.0
+    }, 
+    {
+      "positions": [
+        {
+          "dof": "tower_1", 
+          "pos": 20.00
+        }
+      ], 
+      "millis": 1000.0
+    }, 
+    {
+      "positions": [
+        {
+          "dof": "tower_1", 
+          "pos": 30.00
+        }
+      ], 
+      "millis": 2000.0
+    }, 
+    {
+      "positions": [
+        {
+          "dof": "tower_1", 
+          "pos": 40.00
+        }
+      ], 
+      "millis": 3000.0
+    }, 
+    {
+      "positions": [
+        {
+          "dof": "tower_1", 
+          "pos": 50.00
+        }
+      ], 
+      "millis": 4000.0
+    }
+  ]
+}
