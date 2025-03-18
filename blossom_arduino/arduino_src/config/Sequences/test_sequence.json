@@ -1,0 +1,110 @@
+{
+  "animation": "test", 
+  "frame_list": [
+    {
+      "positions": [
+        {
+          "dof": "tower_1", 
+          "pos": 15.00
+        }, 
+        {
+          "dof": "tower_2", 
+          "pos": 15.00
+        }, 
+        {
+          "dof": "tower_3", 
+          "pos": 15.00
+        }, 
+        {
+          "dof": "base", 
+          "pos": 3.00
+        }
+      ], 
+      "millis": 0.0
+    }, 
+    {
+      "positions": [
+        {
+          "dof": "tower_1", 
+          "pos": 20.00
+        }, 
+        {
+          "dof": "tower_2", 
+          "pos": 30.00
+        }, 
+        {
+          "dof": "tower_3", 
+          "pos": 10.00
+        }, 
+        {
+          "dof": "base", 
+          "pos": 5.00
+        }
+      ], 
+      "millis": 103.0
+    }, 
+    {
+      "positions": [
+        {
+          "dof": "tower_1", 
+          "pos": 20.00
+        }, 
+        {
+          "dof": "tower_2", 
+          "pos": 10.00
+        }, 
+        {
+          "dof": "tower_3", 
+          "pos": 5.00
+        }, 
+        {
+          "dof": "base", 
+          "pos": 20.00
+        }
+      ], 
+      "millis": 205.0
+    }, 
+    {
+      "positions": [
+        {
+          "dof": "tower_1", 
+          "pos": 10.00
+        }, 
+        {
+          "dof": "tower_2", 
+          "pos": 5.00
+        }, 
+        {
+          "dof": "tower_3", 
+          "pos": 30.00
+        }, 
+        {
+          "dof": "base", 
+          "pos": 20.00
+        }
+      ], 
+      "millis": 306.0
+    }, 
+    {
+      "positions": [
+        {
+          "dof": "tower_1", 
+          "pos": 20.00
+        }, 
+        {
+          "dof": "tower_2", 
+          "pos": 10.00
+        }, 
+        {
+          "dof": "tower_3", 
+          "pos": 5.00
+        }, 
+        {
+          "dof": "base", 
+          "pos": 2.00
+        }
+      ], 
+      "millis": 409.0
+    }
+  ]
+}

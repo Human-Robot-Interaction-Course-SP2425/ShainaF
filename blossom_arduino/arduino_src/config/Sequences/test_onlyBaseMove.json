@@ -1,0 +1,50 @@
+{
+  "animation": "OnlyBaseMove", 
+  "frame_list": [
+    {
+      "positions": [
+        {
+          "dof": "base", 
+          "pos": 10.00
+        }
+      ], 
+      "millis": 0.0
+    }, 
+    {
+      "positions": [
+        {
+          "dof": "base", 
+          "pos": 20.00
+        }
+      ], 
+      "millis": 1000.0
+    }, 
+    {
+      "positions": [
+        {
+          "dof": "base", 
+          "pos": 30.00
+        }
+      ], 
+      "millis": 3000.0
+    }, 
+    {
+      "positions": [
+        {
+          "dof": "base", 
+          "pos": 40.00
+        }
+      ], 
+      "millis": 6000.0
+    }, 
+    {
+      "positions": [
+        {
+          "dof": "base", 
+          "pos": 50.00
+        }
+      ], 
+      "millis": 10000.0
+    }
+  ]
+}
