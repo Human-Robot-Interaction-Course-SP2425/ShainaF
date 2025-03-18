@@ -106,7 +106,11 @@ class RobotConfig(object):
 
         # get IDs for connected motors
         used_configs = []
+        print(self.ports)
         for port in self.ports:
+            if port != "COM9": 
+                continue
+            
             if port == "":
                 print("No ports available")
                 sys.exit(1)

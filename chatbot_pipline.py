@@ -37,6 +37,7 @@ class ChatBot:
         so also watch out for weird spellings:
         """
         load_dotenv()
+        print(os.environ.get("OPENAI_API_KEY"))
         self.client = OpenAI(
             api_key=os.environ.get("OPENAI_API_KEY"),
         )
@@ -114,7 +115,7 @@ class ChatBot:
             model=model,
             file=audio_file
         )
-        # print(transcription.text)
+        #print(transcription.text)
         return transcription.text
 
     def prompt_gpt(self, text, input_prompt, model="gpt-4o-mini") -> str:
