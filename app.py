@@ -15,6 +15,18 @@ from utils import CvFpsCalc
 from model import KeyPointClassifier
 from model import PointHistoryClassifier
 
+from utilties import *
+from chatbot_pipline import *
+
+#Mappings
+hand_to_seq = {
+    "Open": "reset",
+    "Close": "sad",
+    "Pointer": "no",
+    "OK": "happy",
+    "Peace": "fear"
+}
+
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -140,7 +152,7 @@ def main():
                             pre_processed_point_history_list)
 
                 # Hand sign classification
-                hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
+                hand_sign_id = keypoint_classifier(pre_processed_landmark_list) #Output number - Handsign number in list
                 if hand_sign_id == 2:  # Point gesture
                     point_history.append(landmark_list[8])
                 else:
@@ -165,9 +177,16 @@ def main():
                     debug_image,
                     brect,
                     handedness,
-                    keypoint_classifier_labels[hand_sign_id],
+                    keypoint_classifier_labels[hand_sign_id], #Output Label
                     point_history_classifier_labels[most_common_fg_id[0][0]],
                 )
+
+                #Run sequence
+                if(hand_sign_id != 2):
+                    label = keypoint_classifier_labels[hand_sign_id]
+                    #print(type(label))
+                    #print(hand_to_seq[label])
+                    run_seq(hand_to_seq[label])
         else:
             point_history.append([0, 0])
 
