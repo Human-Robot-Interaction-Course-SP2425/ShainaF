@@ -1,5 +1,5 @@
 from time import sleep
-from utils import *
+from utilities import *
 
 init_robot()
 

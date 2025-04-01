@@ -15,7 +15,7 @@ from utils import CvFpsCalc
 from model import KeyPointClassifier
 from model import PointHistoryClassifier
 
-from utilties import *
+from utilities import *
 from chatbot_pipline import *
 
 #Mappings
@@ -24,7 +24,8 @@ hand_to_seq = {
     "Close": "sad",
     "Pointer": "no",
     "OK": "happy",
-    "Peace": "fear"
+    "Peace": "fear",
+    "Love": "happy_dance"
 }
 
 
@@ -51,6 +52,7 @@ def get_args():
 
 
 def main():
+    init_robot()
     # Argument parsing #################################################################
     args = get_args()
 
@@ -185,8 +187,8 @@ def main():
                 if(hand_sign_id != 2):
                     label = keypoint_classifier_labels[hand_sign_id]
                     #print(type(label))
-                    print(hand_to_seq[label])
-                    #run_seq(hand_to_seq[label])
+                    #print(hand_to_seq[label])
+                    run_seq(hand_to_seq[label])
         else:
             point_history.append([0, 0])
 

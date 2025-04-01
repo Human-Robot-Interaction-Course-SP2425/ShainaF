@@ -1,4 +1,4 @@
-from utils import *
+from utilities import *
 from chatbot_pipline import *
 
 CAMERA_INDEX = 0  # run list_camera_ports() to choose which camera to use
