@@ -1,5 +1,7 @@
 {
   "animation": "sad_head_down", 
+  "emotion": "sadness",
+  "emotion_strength": 0.7,
   "frame_list": [
     {
       "positions": [

@@ -1,5 +1,7 @@
 {
   "animation": "happy_look", 
+  "emotion": "surpise",
+  "emotion_strength": 0.3,
   "frame_list": [
     {
       "positions": [

@@ -1,5 +1,7 @@
 {
-  "animation": "fear_look", 
+  "animation": "fear_look",
+  "emotion": "fear",
+  "emotion_strength": 0.4, 
   "frame_list": [
     {
       "positions": [

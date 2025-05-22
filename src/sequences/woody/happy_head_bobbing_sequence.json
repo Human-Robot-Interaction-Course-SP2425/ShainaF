@@ -1,5 +1,7 @@
 {
   "animation": "happy_head_bobbing", 
+  "emotion": "neutral",
+  "emotion_strength": 0.5,
   "frame_list": [
     {
       "positions": [

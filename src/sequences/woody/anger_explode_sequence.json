@@ -1,5 +1,7 @@
 {
-  "animation": "anger_explode", 
+  "animation": "anger_explode",
+  "emotion": "anger",
+  "emotion_strength": 0.9, 
   "frame_list": [
     {
       "positions": [

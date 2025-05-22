@@ -108,7 +108,7 @@ class RobotConfig(object):
         used_configs = []
         print(self.ports)
         for port in self.ports:
-            if port != "COM9": 
+            if port != "COM7": 
                 continue
             
             if port == "":

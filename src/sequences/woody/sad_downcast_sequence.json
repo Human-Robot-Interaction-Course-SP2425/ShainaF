@@ -1,5 +1,7 @@
 {
   "animation": "sad_downcast", 
+  "emotion": "sadness",
+  "emotion_strength": 0.6,
   "frame_list": [
     {
       "positions": [

@@ -1,5 +1,7 @@
 {
   "animation": "happy_bounce", 
+  "emotion": "joy",
+  "emotion_strength": 0.7,
   "frame_list": [
     {
       "positions": [

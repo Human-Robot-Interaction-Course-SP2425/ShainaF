@@ -1,5 +1,7 @@
 {
   "animation": "happy_dance", 
+  "emotion": "joy",
+  "emotion_strength": 0.8,
   "frame_list": [
     {
       "positions": [

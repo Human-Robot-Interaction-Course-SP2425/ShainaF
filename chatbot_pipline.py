@@ -9,6 +9,11 @@ import time
 from pygame import mixer
 import os
 from dotenv import load_dotenv
+from transformers import pipeline
+import json
+import random
+from utilities import *
+import time
 
 
 def list_audio_devices():
@@ -36,7 +41,7 @@ class ChatBot:
         The following text has been taking in from an audio transcription
         so also watch out for weird spellings:
         """
-        load_dotenv()
+        load_dotenv(override=True)
         print(os.environ.get("OPENAI_API_KEY"))
         self.client = OpenAI(
             api_key=os.environ.get("OPENAI_API_KEY"),
@@ -140,14 +145,13 @@ class ChatBot:
             speech output filename
         """
         speech_file_path = Path(__file__).parent / "speech.mp3"
-        response = self.client.audio.speech.create(
+        with self.client.audio.speech.with_streaming_response.create(
             model=model,
             voice=voice,
             input=prompt_output
-        )
-
-        response.stream_to_file(speech_file_path)
-
+        ) as response:
+            response.stream_to_file(speech_file_path)
+ 
         mixer.init()
         mixer.music.load("speech.mp3")
         mixer.music.play()
@@ -155,10 +159,10 @@ class ChatBot:
             time.sleep(1)
         mixer.music.stop()
         mixer.quit()
-
+ 
         os.remove("speech.mp3")
-
-
+ 
+ 
         return "speech.mp3"
 
     def run_pipline(self, speech2text_model="whisper-1", chat_model="gpt-4o-mini", text2speech_model="tts-1",
@@ -166,12 +170,35 @@ class ChatBot:
         res = self.record_audio()
         print("---")
         # print(f"output file: {res}")
+        classifier = pipeline("text-classification", model="j-hartmann/emotion-english-distilroberta-base", top_k=None)
 
         transcribed_text = self.speach2text(res, speech2text_model)
         print(f"[transcribed text]: {transcribed_text}")
 
         text_response = self.prompt_gpt(transcribed_text, self.preprompt, chat_model)
         print(f"[{chat_model} response]: {text_response}")
+
+        top_result = classifier(text_response)[0]
+        top_emotion_data = sorted(top_result, key=lambda x: x['score'], reverse=True)[0]
+        top_emotion = top_emotion_data['label']
+        confidence_score = top_emotion_data['score']
+
+        print(f"Top emotion: {top_emotion} ({confidence_score:.2f})")
+
+        movement_library = load_all_movements()
+
+        movement = select_movement(top_emotion, confidence_score, movement_library)
+
+        if movement:
+            print(f"Selected: {movement['filename']} ({movement['emotion_strength']})")
+            print(movement['animation'])
+            run_seq(movement['animation'])
+            time.sleep(10)
+            run_seq('reset')
+            time.sleep(5)
+        # Send movement["frame_list"] to robot
+        else:
+            print("No suitable movement found.")
 
         filename = self.text2speech(text_response, text2speech_model, text2speech_voice)
         # print(f"output file {filename}")
@@ -183,6 +210,39 @@ class ChatBot:
             {text_response}\n
         """
         return transcribed_text, text_response, self.preprompt
+    
+
+def load_all_movements(directory="src\sequences\woody"):
+    movements = []
+    for filename in os.listdir(directory):
+        if filename.endswith(".json"):
+            filepath = os.path.join(directory, filename)
+            with open(filepath, "r") as f:
+                try:
+                    data = json.load(f)
+                    if "emotion" in data and "emotion_strength" in data:
+                        data["filename"] = filename  
+                        movements.append(data)
+                except json.JSONDecodeError:
+                    print(f"Skipping {filename}: not valid JSON")
+    return movements
+
+def select_movement(emotion: str, confidence: float, movement_library: list):
+    # Filter movements that match the emotion
+    candidates = [m for m in movement_library if m.get("emotion") == emotion]
+
+    # Keep only those with emotion_strength ≤ confidence
+    eligible = [m for m in candidates if m.get("emotion_strength", 0) <= confidence]
+
+    if not eligible:
+        print(f"No matching movement for emotion '{emotion}' with confidence {confidence}.")
+        # fallback to the closest match
+        if candidates:
+            closest = min(candidates, key=lambda m: abs(m["emotion_strength"] - confidence))
+            return closest
+        return None
+
+    return random.choice(eligible)
 
 
 if __name__ == '__main__':
@@ -201,14 +261,31 @@ if __name__ == '__main__':
 
     # input selected audio device index
     cb = ChatBot(mic_index=MIC_INDEX)
+    init_robot()
 
     # run the chatbot
-    cb.run_pipline()
+    # num = 0
+    # while num:
+    #     cb.run_pipline()
+    #     num = input("Run again? 1: yes, 0: no")
+
+    #classifier = pipeline("text-classification", model="j-hartmann/emotion-english-distilroberta-base", top_k=None)
+    
 
     # run the chat bot again
-    transcribed_text, response, old_convo = cb.run_pipline()
+    #transcribed_text, response, old_convo = cb.run_pipline()
 
+    try:
+        while True:
+            cb.run_pipline()
+            print("Ready for the next input. Press SPACE to talk...")
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\n[INFO] Interrupted by user. Shutting down gracefully...")
+
+    #result = classifier(response)
+    #print(result)
     # print result
-    print("\n---convo log:---")
-    print(transcribed_text, response, old_convo)
+    # print("\n---convo log:---")
+    # print(transcribed_text, response, old_convo)
 

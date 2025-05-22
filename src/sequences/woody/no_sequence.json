@@ -1,5 +1,7 @@
 {
   "animation": "no", 
+  "emotion": "disgust",
+  "emotion_strength": 0.5,
   "frame_list": [
     {
       "positions": [

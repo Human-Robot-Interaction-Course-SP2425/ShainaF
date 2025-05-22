@@ -21,11 +21,11 @@ from chatbot_pipline import *
 #Mappings
 hand_to_seq = {
     "Open": "reset",
-    "Close": "sad",
-    "Pointer": "no",
-    "OK": "happy",
-    "Peace": "fear",
-    "Love": "happy_dance"
+    "Close": "sad_shrink",
+    "OK": "happy_nodding",
+    "Peace": "happy_head_bobbing",
+    "Love": "happy_dance",
+    "Loser": "anger"
 }
 
 

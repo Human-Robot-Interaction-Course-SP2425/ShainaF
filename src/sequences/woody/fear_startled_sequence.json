@@ -1,5 +1,7 @@
 {
   "animation": "fear_startled", 
+  "emotion": "fear",
+  "emotion_strength": 0.9,
   "frame_list": [
     {
       "positions": [

@@ -1,5 +1,7 @@
 {
   "animation": "anger_hit", 
+  "emotion": "anger",
+  "emotion_strength": 0.9, 
   "frame_list": [
     {
       "positions": [

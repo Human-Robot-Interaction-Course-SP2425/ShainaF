@@ -1,5 +1,7 @@
 {
   "animation": "happy_raucous", 
+  "emotion": "surprise",
+  "emotion_strength": 0.5,
   "frame_list": [
     {
       "positions": [
