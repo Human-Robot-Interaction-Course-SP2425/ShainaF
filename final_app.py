@@ -11,7 +11,7 @@ import queue
 
 from utils import CvFpsCalc
 from model import KeyPointClassifier, PointHistoryClassifier
-from utilities import run_seq
+from utilities import init_robot, run_seq
 
 import os
 import time
@@ -22,6 +22,28 @@ import threading
 import speech_recognition as sr
 import pyttsx3
 import openai
+from transformers import pipeline
+import random
+import json
+from openai import OpenAI
+from dotenv import load_dotenv
+from pynput.keyboard import Listener, Key
+from pynput import keyboard
+from pvrecorder import PvRecorder
+import struct
+import wave
+from openai import OpenAI
+from pathlib import Path
+import time
+from pygame import mixer
+import os
+from dotenv import load_dotenv
+from transformers import pipeline
+import json
+import random
+from utilities import *
+import time
+
 
 
 hand_to_seq = {
@@ -30,7 +52,9 @@ hand_to_seq = {
     "OK": "happy_nodding",
     "Peace": "happy_head_bobbing",
     "Love": "happy_dance",
-    "Loser": "anger"
+    "Loser": "anger",
+    "Good": "happy_nodding",
+    "Bad": "sad_down",
 }
 
 
@@ -158,6 +182,7 @@ class HandGestureRecognizer:
                     if seq:
                         self.event_queue.put(("gesture", seq))
                         run_seq(seq)
+                        time.sleep(5)
         else:
             self.point_history.append([0, 0])
 
@@ -526,10 +551,25 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 class ChatBot:
     def __init__(self, event_queue: queue.Queue, mic_index=0,
                  system_prompt=None):
+        self.emotion_classifier = pipeline(
+            "text-classification",
+            model="j-hartmann/emotion-english-distilroberta-base",
+            top_k=None
+        )
+        self.preprompt = """
+        Keep this response as a short and concise message as if you
+        were talking to someone one to one.
+        The following text has been taking in from an audio transcription
+        so also watch out for weird spellings:
+        """
+        load_dotenv(override=True)
+        self.client = OpenAI(
+            api_key=os.environ.get("OPENAI_API_KEY"),
+        )
+        self.pipeline_queue = queue.Queue()
         self.event_queue = event_queue
         self.recognizer = sr.Recognizer()
         self.mic        = sr.Microphone(device_index=mic_index)
-        self.tts        = pyttsx3.init()
         self.system_prompt = system_prompt or (
             "You are a friendly assistant that responds concisely to user speech "
             "and adapts responses to human gestures."
@@ -539,6 +579,17 @@ class ChatBot:
             target=self._background_listen, daemon=True
         )
         self.listen_thread.start()
+    
+    def run_pipeline_loop(self):
+        while True:
+            text = self.pipeline_queue.get()
+            print(f"[pipeline thread] Received input: {text}")
+            try:
+                response = self.run_pipline(text)
+                self.speak(response)  # this goes to TTS queue (which is non-blocking)
+            except Exception as e:
+                print(f"[pipeline thread] Error: {e}")
+
 
     def run_loop(self):
         """ Handle incoming gesture events """
@@ -546,24 +597,156 @@ class ChatBot:
             event_type, payload = self.event_queue.get()
             if event_type == "gesture":
                 resp = self.on_gesture(payload)
-                self.speak(resp)
+                
+    
+    def load_all_movements(self, directory=".\src\sequences\woody"):
+        movements = []
+        for filename in os.listdir(directory):
+            if filename.endswith(".json"):
+                filepath = os.path.join(directory, filename)
+                with open(filepath, "r") as f:
+                    try:
+                        data = json.load(f)
+                        if "emotion" in data and "emotion_strength" in data:
+                            data["filename"] = filename  
+                            movements.append(data)
+                    except json.JSONDecodeError:
+                        print(f"Skipping {filename}: not valid JSON")
+        return movements
+
+    def select_movement(self, emotion: str, confidence: float, movement_library: list):
+        # Filter movements that match the emotion
+        candidates = [m for m in movement_library if m.get("emotion") == emotion]
+
+        # Keep only those with emotion_strength ≤ confidence
+        eligible = [m for m in candidates if m.get("emotion_strength", 0) <= confidence]
+
+        if not eligible:
+            print(f"No matching movement for emotion '{emotion}' with confidence {confidence}.")
+            # fallback to the closest match
+            if candidates:
+                closest = min(candidates, key=lambda m: abs(m["emotion_strength"] - confidence))
+                return closest
+            return None
+
+        return random.choice(eligible)
+    
+    def text2speech(self, prompt_output, model="tts-1", voice="alloy") -> str:
+        """
+        Return:
+            speech output filename
+        """
+        speech_file_path = Path(__file__).parent / "speech.mp3"
+        with self.client.audio.speech.with_streaming_response.create(
+            model=model,
+            voice=voice,
+            input=prompt_output
+        ) as response:
+            response.stream_to_file(speech_file_path)
+ 
+        mixer.init()
+        mixer.music.load("speech.mp3")
+        mixer.music.play()
+        while mixer.music.get_busy():
+            time.sleep(1)
+        mixer.music.stop()
+        mixer.quit()
+ 
+        os.remove("speech.mp3")
+ 
+ 
+        return "speech.mp3"
+    
+    def run_pipline(self, text, chat_model="gpt-4o-mini", text2speech_model="tts-1",
+                    text2speech_voice="alloy"):
+        print("---")
+        # print(f"output file: {res}")
+       
+
+        
+        print(f"[transcribed text]: {text}")
+
+        text_response = self.prompt_gpt(text, self.preprompt, chat_model)
+        print(f"[{chat_model} response]: {text_response}")
+        
+
+        top_result = self.emotion_classifier(text_response)[0]
+        top_emotion_data = sorted(top_result, key=lambda x: x['score'], reverse=True)[0]
+        top_emotion = top_emotion_data['label']
+        confidence_score = top_emotion_data['score']
+
+        print(f"Top emotion: {top_emotion} ({confidence_score:.2f})")
+
+        movement_library = self.load_all_movements()
+
+        movement = self.select_movement(top_emotion, confidence_score, movement_library)
+        filename = self.text2speech(text_response, text2speech_model, text2speech_voice)
+
+        if movement:
+            print(f"Selected: {movement['filename']} ({movement['emotion_strength']})")
+            print(movement['animation'])
+            run_seq(movement['animation'])
+            time.sleep(10)
+            run_seq('reset')
+            time.sleep(5)
+        # Send movement["frame_list"] to robot
+        else:
+            print("No suitable movement found.")
+
+        #filename = self.text2speech(text_response, text2speech_model, text2speech_voice)
+        # print(f"output file {filename}")
+        
+
+        self.preprompt += f"""
+        past input:
+            {text}
+        past response:
+            {text_response}\n
+        """
+
+        
+    
+    def prompt_gpt(self, text, input_prompt, model="gpt-4o-mini") -> str:
+        """
+        Return:
+            chatgpt string response
+        """
+        response = self.client.chat.completions.create(
+            model=model,
+            messages=[
+                # {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user",
+                 "content": input_prompt + text
+                 }
+            ]
+        )
+        return response.choices[0].message.content
+    
+    
 
     def _background_listen(self):
-        """ Continuously listen for speech """
         with self.mic as src:
             self.recognizer.adjust_for_ambient_noise(src)
         while self.listening:
             with self.mic as src:
+                print("[Listening for speech...]")
                 try:
                     audio = self.recognizer.listen(src, timeout=5)
                 except sr.WaitTimeoutError:
+                    print("[Timeout — no speech detected]")
                     continue
             try:
                 text = self.recognizer.recognize_google(audio)
-            except (sr.UnknownValueError, sr.RequestError):
+                print("[Recognized]:", text)
+            except sr.UnknownValueError:
+                print("[Could not understand audio]")
                 continue
-            resp = self.on_speech(text)
-            self.speak(resp)
+            except sr.RequestError as e:
+                print(f"[Recognition error: {e}]")
+                continue
+
+            response = self.on_speech(text)
+
 
     def on_gesture(self, gesture_name):
         msgs = [
@@ -580,22 +763,9 @@ class ChatBot:
             return f"[Gesture error: {e}]"
 
     def on_speech(self, text):
-        msgs = [
-            {"role":"system","content":self.system_prompt},
-            {"role":"user","content":text}
-        ]
-        try:
-            c = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo", messages=msgs,
-                max_tokens=150, temperature=0.7
-            )
-            return c.choices[0].message.content.strip()
-        except Exception as e:
-            return f"[Speech error: {e}]"
+        print(f"[on_speech] Received: {text}")
+        self.pipeline_queue.put(text)
 
-    def speak(self, text):
-        self.tts.say(text)
-        self.tts.runAndWait()
 
     def stop(self):
         self.listening = False
@@ -617,6 +787,7 @@ class InteractionManager:
         threads = [
             threading.Thread(target=self.gesture.run,   name="GestureThread"),
             threading.Thread(target=self.chatbot.run_loop, name="ChatbotThread"),
+            threading.Thread(target=self.chatbot.run_pipeline_loop, name="PipelineThread", daemon=True),
         ]
         for t in threads:
             t.daemon = True
@@ -630,5 +801,6 @@ class InteractionManager:
 
 if __name__ == "__main__":
     # parse any CLI args here if you like (e.g. argparse for mic/cam indices)
+    init_robot()
     mgr = InteractionManager(mic_index=0, cam_index=0)
     mgr.start()
